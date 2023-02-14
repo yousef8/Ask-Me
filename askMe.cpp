@@ -8,8 +8,74 @@
 #include<atomic>
 #include<fstream>
 #include<limits>
+#include<sstream>
+#include<vector>
 
 using namespace std;
+
+string users = "users.txt";
+
+struct User {
+	unsigned long id;
+	string name;
+	string email;
+	string username;
+	string password;
+	bool allow_anonymous;
+
+	User() {
+		id = 0;
+		name = email = username = password = "";
+		allow_anonymous = false;
+	}
+
+	User(unsigned long _id, string _name, string _email, string _username, string _password, bool _allow_anonymous) {
+		id = _id;
+		name = _name;
+		email = _email;
+		username = _username;
+		password = _password;
+		allow_anonymous = _allow_anonymous;
+	}
+
+	void print() {
+		cout << "ID " << id << " name " << name << " email " << email << " username " << username << " password " << password << " Allow-Anonymous " << allow_anonymous << "\n";
+	}
+};
+
+struct User_DB {
+	User search(string username) {
+		ifstream fin(users);
+
+		if (fin.fail()) {
+			cout << "Can't open the file\n";
+			User temp;
+			return temp;
+		}
+
+		string row;
+		while (getline(fin, row))
+		{
+			vector<string> usr;
+			istringstream iss(row);
+
+			string cell;
+			while (getline(iss, cell, ',')) {
+				usr.push_back(cell);
+			}
+
+			if (usr[3] == username) {
+				fin.close();
+				User temp {stoul(usr[0]), usr[1], usr[2], usr[3], usr[4], usr[5] == "1"};
+				return temp;
+			};
+		}
+
+		fin.close();
+		User temp;
+		return temp;
+	}
+};
 
 struct Program {
 	void run() {
@@ -18,6 +84,9 @@ struct Program {
 
 			if (choice == 1)
 				sign_up();
+
+			if (choice == 2)
+				login();
 
 			if (choice == 3)
 				break;
@@ -29,6 +98,7 @@ struct Program {
 	int start_menu() {
 		cout << "\nMenu:\n";
 		cout << "\t1: Sign Up\n";
+		cout << "\t2: Log In\n";
 		cout << "\t3: Exit\n";
 
 		int choice = 0;
@@ -42,17 +112,17 @@ struct Program {
 		return choice;
 	}
 
-	unsigned int get_last_uid() {
+	unsigned long get_last_uid() {
 		ifstream fin("last_user_id.txt");
-		unsigned int l_uid;
+		unsigned long l_uid;
 		if (!(fin >> l_uid))
 			l_uid = 0;
 		fin.close();
 		return l_uid;
 	}
 
-	unsigned int generate_id() {
-		static atomic<unsigned int> id = get_last_uid() + 1;
+	unsigned long generate_id() {
+		static atomic<unsigned long> id = get_last_uid() + 1;
 
 		ofstream fout("last_user_id.txt");
 		fout << id;
@@ -60,7 +130,7 @@ struct Program {
 		return id++;
 	}
 
-	unsigned int sign_up() {
+	unsigned long sign_up() {
 		cout << "Enter Name (no spaces) : ";
 		string name;
 		cin >> name;
@@ -83,7 +153,7 @@ struct Program {
 
 		// Generate ID
 
-		unsigned int id = generate_id();
+		unsigned long id = generate_id();
 
 		// Adding user to file
 		ofstream fout("users.txt", ios::app);
@@ -92,6 +162,40 @@ struct Program {
 		fout.close();
 
 		return 0;
+	}
+
+	void login() {
+		User_DB user_db;
+		string username, password;
+		User usr;
+
+		for (int i = 0; i < 3; i++) {
+			cout << "Enter username : ";
+			cin >> username;
+
+			cout << "Enter password : ";
+			cin >> password;
+
+			usr = user_db.search(username);
+			if (!usr.id){
+				cout << "User doesn't exist. You got " << 2 - i << " tries left"
+						 << "\n";
+				continue;
+			}
+
+			if (usr.password != password){
+				cout << "Wrong Password. You got " << 2 - i << " tries left"
+						 << "\n";
+				continue;
+			}
+			break;
+		}
+
+		if (!usr.id)
+			return;
+		
+		cout << usr.name << " is loged in\n";
+		return;
 	}
 };
 
