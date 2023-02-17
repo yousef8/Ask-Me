@@ -10,6 +10,7 @@
 #include<limits>
 #include<sstream>
 #include<vector>
+#include<limits>
 
 using namespace std;
 
@@ -162,6 +163,7 @@ struct Q_DB {
 		}
 		q.generate_id();
 		fout << q.id << "," << q.p_qid << "," << q.is_anonymous << "," << q.to << "," << q.from << "," << q.q << "," << q.ans << "\n";
+		fout.close();
 		return 0;
 	}
 
@@ -191,6 +193,119 @@ struct Q_DB {
 		fin.close();
 		Q temp;
 		return temp;
+	}
+};
+
+struct AskMe {
+	User logged_user;
+
+	AskMe() {
+	}
+
+	AskMe(User _user) {
+		logged_user = _user;
+	}
+
+	int menu()
+	{
+		cout << "Menu\n";
+		cout << "\t5: Ask Question\n";
+		cout << "\t8: Log Out\n\n";
+		int choice{0};
+		while (true)
+		{
+			cout << "Enter a valid choice in range (1 - 8) : ";
+			cin >> choice;
+			if (1 <= choice && choice <= 8)
+				break;
+			cout << "Invalid Input\n";
+		}
+		cout << "*****************************************************\n\n";
+		return choice;
+	}
+
+	int run() {
+		while (true){
+			int choice = menu();
+
+			if (choice == 5)
+				Ask_Q();
+
+			if (choice == 8)
+				break;
+		}
+		cout << "GoodBye!!!\n";
+		return 0;
+	}
+
+	int Ask_Q() {
+
+		// Find user or cancel operation
+		cout << "Enter User ID or 0 to cancel : ";
+		unsigned long uid;
+		cin >> uid;
+		User to_user;
+
+		while (uid) {
+			User_DB db;
+			to_user = db.search(uid);
+			if (to_user.id)
+				break;
+				
+			cout << "User doesn't exist!!!\n";
+			cout << "Enter User ID or 0 to cancel : ";
+			cin >> uid;
+		}
+
+
+		if (!uid)
+			return 0;
+		
+		// Set is_anonymous boolean
+		bool is_anonymous = 0;
+		if (!to_user.allow_anonymous)
+			cout << "This user doesn't allow anonymous questions your identity will be exposed!!\n";
+		
+		while (to_user.allow_anonymous) {
+			cout << "Do you want your question to be anonymous or not enter (1 or 0) : ";
+			cin >> is_anonymous;
+			if (0 <= is_anonymous && is_anonymous <= 1)
+				break;
+			cout << "Wrong input!!\n";
+		}
+
+		// New or Thread question
+		cout << "Enter a Question ID for thread questions or 0 for new questions : ";
+		unsigned long p_qid;
+		cin >> p_qid;
+
+		while(p_qid) {
+			Q_DB db;
+			Q q = db.search(p_qid);
+			if (q.id)
+				break;
+			cout << "There is no such Question with the ID " << p_qid << "\n";
+			cout << "Enter a Question ID for thread questions or 0 for new questions : ";
+			cin >> p_qid;
+		}
+
+		cout << "Enter your Question : ";
+		string content{""};
+		cin.clear();
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+		getline(cin, content);
+
+		Q q;
+		q.p_qid = p_qid;
+		q.is_anonymous = is_anonymous;
+		q.to = uid;
+		q.from = logged_user.id;
+		q.q = content;
+
+		Q_DB q_db;
+		q_db.create(q);
+
+		return 0;
 	}
 };
 
@@ -311,16 +426,17 @@ struct Program
 
 		if (!usr.id)
 			return;
-		
-		cout << usr.name << " is loged in\n";
+
+		AskMe ask(usr);
+		ask.run();
 		return;
 	}
 };
 
-int main() {
+int main()
+{
 	Program program;
 	program.run();
-	
+
 	return 0;
 }
-
