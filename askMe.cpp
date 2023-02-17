@@ -77,6 +77,38 @@ struct User_DB {
 		User temp;
 		return temp;
 	}
+
+	User search(unsigned long uid) {
+		ifstream fin(users);
+
+		if (fin.fail()) {
+			cout << "Can't open the file\n";
+			User temp;
+			return temp;
+		}
+
+		string row;
+		while (getline(fin, row))
+		{
+			vector<string> usr;
+			istringstream iss(row);
+
+			string cell;
+			while (getline(iss, cell, ',')) {
+				usr.push_back(cell);
+			}
+
+			if (stoul(usr[0]) == uid) {
+				fin.close();
+				User temp {stoul(usr[0]), usr[1], usr[2], usr[3], usr[4], usr[5] == "1"};
+				return temp;
+			};
+		}
+
+		fin.close();
+		User temp;
+		return temp;
+	}
 };
 
 struct Q {
