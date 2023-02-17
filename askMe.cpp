@@ -14,6 +14,8 @@
 using namespace std;
 
 string users = "users.txt";
+string questions_file = "questions.txt";
+string q_last_id = "q_last_id.txt";
 
 struct User {
 	unsigned long id;
@@ -77,7 +79,63 @@ struct User_DB {
 	}
 };
 
-struct Program {
+struct Q {
+	unsigned long id, to, from, p_qid;
+	string q, ans;
+	bool is_anonymous;
+
+	Q() {
+		id = to = from = p_qid = 0;
+		q = "";
+		ans = "NOT ANSWERED";
+		is_anonymous = 0;
+	}
+
+	Q(unsigned long _id, unsigned long _p_qid, bool _is_anonymous, unsigned long _to, unsigned long _from, string _q, string _ans) {
+		id = _id;
+		p_qid = _p_qid;
+		to = _to;
+		from = _from;
+		is_anonymous = _is_anonymous;
+		q = _q;
+		ans = _ans;
+	}
+
+	unsigned long get_last_qid() {
+		ifstream fin(q_last_id);
+		unsigned long l_qid;
+		if (!(fin >> l_qid))
+			l_qid = 0;
+		fin.close();
+		return l_qid;
+	}
+
+	int generate_id() {
+		static atomic<unsigned long> n_qid = get_last_qid() + 1;
+
+		ofstream fout(q_last_id);
+		fout << n_qid;
+		fout.close();
+		id = n_qid++;
+		return 0;
+	}
+};
+
+struct Q_DB {
+	int create(Q q) {
+		ofstream fout(questions_file, ios::app);
+		if (fout.fail()){
+			cout << "Couldn't open questions DB\n";
+			return 1;
+		}
+		q.generate_id();
+		fout << q.id << "," << q.p_qid << "," << q.is_anonymous << "," << q.to << "," << q.from << "," << q.q << "," << q.ans << "\n";
+		return 0;
+	}
+};
+
+struct Program
+{
 	void run() {
 		while (true) {
 			int choice = start_menu();
@@ -200,9 +258,9 @@ struct Program {
 };
 
 int main() {
-	Program program;
-	program.run();
-
+	// Program program;
+	// program.run();
+	
 	return 0;
 }
 
