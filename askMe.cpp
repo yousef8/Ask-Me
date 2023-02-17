@@ -132,6 +132,34 @@ struct Q_DB {
 		fout << q.id << "," << q.p_qid << "," << q.is_anonymous << "," << q.to << "," << q.from << "," << q.q << "," << q.ans << "\n";
 		return 0;
 	}
+
+	Q search (unsigned long qid) {
+		ifstream fin(questions_file);
+
+		string line;
+		while (getline(fin, line)) {
+			istringstream iss(line);
+			vector<string> q;
+			string col{};
+
+			// qid, p_qid, is_anonymous, to, from, q, ans
+			while (getline(iss, col, ',')) {
+				q.push_back(col);
+			}
+
+			if (qid != stoul(q[0]))
+				continue;
+
+			fin.close();
+			//       qid            p_qid    is_anonymous      to          from       q    ans
+			Q temp(stoul(q[0]), stoul(q[1]), q[2] == "0", stoul(q[3]), stoul(q[4]), q[5], q[6]);
+			return temp;
+		}
+
+		fin.close();
+		Q temp;
+		return temp;
+	}
 };
 
 struct Program
@@ -258,8 +286,8 @@ struct Program
 };
 
 int main() {
-	// Program program;
-	// program.run();
+	Program program;
+	program.run();
 	
 	return 0;
 }
