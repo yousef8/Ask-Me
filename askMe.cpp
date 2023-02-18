@@ -11,6 +11,7 @@
 #include<sstream>
 #include<vector>
 #include<limits>
+#include<map>
 
 using namespace std;
 
@@ -152,6 +153,21 @@ struct Q {
 		id = n_qid++;
 		return 0;
 	}
+
+	int print() {
+		if (p_qid)
+			cout << "\t|\n\t|_ _";
+		else
+			cout << "==>";
+		cout << "QID [" << id << "]";
+		if (p_qid)
+			cout << "  P_QID [" << p_qid<< "]";
+		if (!is_anonymous)
+			cout << "  From [" << from<< "]";
+		cout << "  To [" << to << "]" << "  Q: " << q << "\n";
+		cout << "\tAns: " << ans << "\n";
+		return 0;
+	}
 };
 
 struct Q_DB {
@@ -193,6 +209,32 @@ struct Q_DB {
 		fin.close();
 		Q temp;
 		return temp;
+	}
+
+	map<unsigned long, vector<Q>> get_multi_Q(unsigned long qid) {
+		map<unsigned long, vector<Q>> mp;
+		ifstream fin(questions_file);
+
+		string row;
+		while (getline(fin,row)) {
+			vector<string> cols;
+			istringstream iss (row);
+
+			string col;
+			while (getline(iss, col, ','))
+				cols.push_back(col);
+
+			if (stoul(cols[3]) == qid) {
+				Q q(stoul(cols[0]), stoul(cols[1]), cols[2] == "1", stoul(cols[3]), stoul(cols[4]), cols[5], cols[6]);
+				if (q.p_qid)
+					mp[q.p_qid].push_back(q);
+				else
+					mp[q.id].push_back(q);
+			}
+		}
+
+		fin.close();
+		return mp;
 	}
 };
 
@@ -305,6 +347,23 @@ struct AskMe {
 		Q_DB q_db;
 		q_db.create(q);
 
+		return 0;
+	}
+
+	int print_q_to_me() {
+		Q_DB q_db;
+
+		map<unsigned long, vector<Q>> mp;
+		mp = q_db.get_multi_Q(logged_user.id);
+
+		
+		for (auto p : mp)
+		{
+			for (auto q : p.second) {
+				q.print();
+			}
+			cout << "\n\n";
+		}
 		return 0;
 	}
 };
@@ -435,8 +494,14 @@ struct Program
 
 int main()
 {
-	Program program;
-	program.run();
+	// Program program;
+	// program.run();
+
+	User usr;
+	usr.id = 13;
+	AskMe ask(usr);
+
+	ask.print_q_to_me();
 
 	return 0;
 }
