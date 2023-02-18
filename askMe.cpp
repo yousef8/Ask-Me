@@ -362,6 +362,36 @@ struct Q_DB {
 		}
 		return 0;
 	}
+
+	map<unsigned long, vector<Q>> feed(unsigned long uid) {
+		map<unsigned long, vector<Q>> mp;
+		ifstream fin(questions_file);
+		if (fin.fail()){
+			cout << "Couldn't open the File DB!!!!\n";
+			return mp;
+		}
+
+		string line;
+		while(getline(fin, line)){
+			vector<string> cols;
+			istringstream iss(line);
+			string col;
+			
+			while(getline(iss, col, ','))
+				cols.push_back(col);
+			
+			if (cols[6] != "NOT ANSWERED" && (stoul(cols[3]) == uid || stoul(cols[4]) == uid)) {
+				Q q(stoul(cols[0]), stoul(cols[1]), cols[2] == "1", stoul(cols[3]), stoul(cols[4]), cols[5], cols[6]);
+				if (q.p_qid)
+					mp[q.p_qid].push_back(q);
+				else
+					mp[q.id].push_back(q);
+			}
+		}
+
+		fin.close();
+		return mp;
+	}
 };
 
 struct AskMe {
@@ -383,6 +413,7 @@ struct AskMe {
 		cout << "\t4: Delete Question\n";
 		cout << "\t5: Ask Question\n";
 		cout << "\t6: List System Users\n";
+		cout << "\t7: Feed\n";
 		cout << "\t8: Log Out\n\n";
 		int choice{0};
 		while (true)
@@ -418,6 +449,9 @@ struct AskMe {
 			
 			if (choice == 6)
 				list_users();
+
+			if (choice == 7)
+				feed();
 
 			if (choice == 8)
 				break;
@@ -598,6 +632,17 @@ struct AskMe {
 		for (auto user : users)
 			user.print();
 
+		return 0;
+	}
+
+	int feed() {
+		map<unsigned long, vector<Q>> feed;
+		Q_DB q_db;
+		feed = q_db.feed(logged_user.id);
+		for (auto p : feed)
+			for (auto q : p.second)
+				q.print();
+		
 		return 0;
 	}
 };
