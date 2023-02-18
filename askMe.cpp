@@ -211,8 +211,18 @@ struct Q_DB {
 		return temp;
 	}
 
-	map<unsigned long, vector<Q>> get_multi_Q(unsigned long qid) {
+	map<unsigned long, vector<Q>> get_multi_Q(string search_field, unsigned long uid) {
 		map<unsigned long, vector<Q>> mp;
+		int search_index{0};
+		if (search_field == "to")
+			search_index = 3;
+		else if (search_field ==  "from")
+			search_index = 4;
+		else {
+			cout << "You can only search for fields (to, from)!!!\n";
+			return mp;
+		}
+
 		ifstream fin(questions_file);
 
 		string row;
@@ -224,7 +234,7 @@ struct Q_DB {
 			while (getline(iss, col, ','))
 				cols.push_back(col);
 
-			if (stoul(cols[3]) == qid) {
+			if (stoul(cols[search_index]) == uid) {
 				Q q(stoul(cols[0]), stoul(cols[1]), cols[2] == "1", stoul(cols[3]), stoul(cols[4]), cols[5], cols[6]);
 				if (q.p_qid)
 					mp[q.p_qid].push_back(q);
@@ -252,6 +262,7 @@ struct AskMe {
 	{
 		cout << "Menu\n";
 		cout << "\t1: Print Questions To Me\n";
+		cout << "\t2: Print Questions From Me\n";
 		cout << "\t5: Ask Question\n";
 		cout << "\t8: Log Out\n\n";
 		int choice{0};
@@ -273,6 +284,9 @@ struct AskMe {
 
 			if (choice == 1)
 				print_q_to_me();
+
+			if (choice == 2)
+				print_q_from_me();
 
 			if (choice == 5)
 				Ask_Q();
@@ -358,7 +372,24 @@ struct AskMe {
 		Q_DB q_db;
 
 		map<unsigned long, vector<Q>> mp;
-		mp = q_db.get_multi_Q(logged_user.id);
+		mp = q_db.get_multi_Q("to", logged_user.id);
+
+		
+		for (auto p : mp)
+		{
+			for (auto q : p.second) {
+				q.print();
+			}
+			cout << "\n\n";
+		}
+		return 0;
+	}
+
+	int print_q_from_me() {
+		Q_DB q_db;
+
+		map<unsigned long, vector<Q>> mp;
+		mp = q_db.get_multi_Q("from", logged_user.id);
 
 		
 		for (auto p : mp)
