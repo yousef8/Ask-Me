@@ -292,6 +292,52 @@ struct Q_DB {
 		}
 		return 0;
 	}
+
+	int Delete(unsigned long qid) {
+		string new_file = "updated_questions.txt";
+		
+		ofstream fout(new_file);
+		if (fout.fail()){
+			cout << "Couldn't create a new file in DB\n";
+			return 1;
+		}
+
+		ifstream fin(questions_file);
+		if (fin.fail()){
+			cout << "couldn't open the questions DB\n";
+			return 1;
+		}
+
+		string line;
+		while (getline(fin, line)){
+			vector<string> cols;
+			string col;
+			istringstream iss(line);
+
+			while (getline(iss, col, ','))
+				cols.push_back(col);
+
+			if (stoul(cols[0]) == qid)
+				continue;
+			
+			fout << cols[0] << "," << cols[1] << "," << cols[2] << "," << cols[3] << "," << cols[4] << "," << cols[5] << "," << cols[6] << "\n";
+		}
+
+		fin.close();
+		fout.close();
+		int remove_status = remove(questions_file.c_str());
+		if (remove_status){
+			cout << "Couldn't remove old questions DB\n";
+			return 1;
+		}
+
+		int rename_status = rename(new_file.c_str(), questions_file.c_str());
+		if (rename_status){
+			cout << "Couldn't rename the new questions DB\n";
+			return 1;
+		}
+		return 0;
+	}
 };
 
 struct AskMe {
@@ -310,6 +356,7 @@ struct AskMe {
 		cout << "\t1: Print Questions To Me\n";
 		cout << "\t2: Print Questions From Me\n";
 		cout << "\t3: Answer Question\n";
+		cout << "\t4: Delete Question\n";
 		cout << "\t5: Ask Question\n";
 		cout << "\t8: Log Out\n\n";
 		int choice{0};
@@ -338,13 +385,15 @@ struct AskMe {
 			if (choice == 3)
 				answer_q();
 
+			if (choice == 4)
+				delete_q();
+
 			if (choice == 5)
 				Ask_Q();
 
 			if (choice == 8)
 				break;
 		}
-		cout << "GoodBye!!!\n";
 		return 0;
 	}
 
@@ -484,6 +533,35 @@ struct AskMe {
 		q_db.update(q.id, ans);
 		return 0;
 	}
+
+	int delete_q(){
+		unsigned long qid;
+		Q_DB q_db;
+		Q q;
+		while (true)
+		{
+			cout << "Enter QID or 0 to cancel : ";
+			cin >> qid;
+			if (!qid)
+				return 0;
+			q = q_db.search(qid);
+			if (q.id == 0){
+				cout << "No such question ID\n";
+				continue;
+			}
+
+			if (q.from == logged_user.id)
+				break;
+			cout << "This question isn't from you to delete!!!\n";
+		}
+		q.print();
+		cout << "\n\n";
+
+		q_db.Delete(q.id);
+
+		cout << "the above question was deleted successfully!!!!\n";
+		return 0;
+	}
 };
 
 struct Program
@@ -501,7 +579,7 @@ struct Program
 			if (choice == 3)
 				break;
 		}
-		cout << "GoodBye\n";
+		cout << "GoodBye!!!\n";
 		return;
 	}
 
