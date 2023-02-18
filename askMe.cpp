@@ -15,7 +15,7 @@
 
 using namespace std;
 
-string users = "users.txt";
+string users_file = "users.txt";
 string questions_file = "questions.txt";
 string q_last_id = "q_last_id.txt";
 
@@ -43,13 +43,13 @@ struct User {
 	}
 
 	void print() {
-		cout << "ID " << id << " name " << name << " email " << email << " username " << username << " password " << password << " Allow-Anonymous " << allow_anonymous << "\n";
+		cout << "ID: [" << id << "] name: [" << name << "] email: [" << email << "] username: [" << username << "] Allow-Anonymous: [" << allow_anonymous << "]\n";
 	}
 };
 
 struct User_DB {
 	User search(string username) {
-		ifstream fin(users);
+		ifstream fin(users_file);
 
 		if (fin.fail()) {
 			cout << "Can't open the file\n";
@@ -81,7 +81,7 @@ struct User_DB {
 	}
 
 	User search(unsigned long uid) {
-		ifstream fin(users);
+		ifstream fin(users_file);
 
 		if (fin.fail()) {
 			cout << "Can't open the file\n";
@@ -110,6 +110,30 @@ struct User_DB {
 		fin.close();
 		User temp;
 		return temp;
+	}
+
+	vector<User> list() {
+		vector<User> users;
+		ifstream fin (users_file);
+		if(fin.fail()){
+			cout << "Couldn't open users DB!!!\n";
+			return users;
+		}
+
+		string line;
+		while(getline(fin, line)){
+			vector<string> user;
+			string col;
+			istringstream iss(line);
+			while(getline(iss,col,','))
+				user.push_back(col);
+
+			User u(stoul(user[0]), user[1], user[2], user[3], user[4], user[5] == "1");
+			users.push_back(u);
+		}
+
+		fin.close();
+		return users;
 	}
 };
 
@@ -358,6 +382,7 @@ struct AskMe {
 		cout << "\t3: Answer Question\n";
 		cout << "\t4: Delete Question\n";
 		cout << "\t5: Ask Question\n";
+		cout << "\t6: List System Users\n";
 		cout << "\t8: Log Out\n\n";
 		int choice{0};
 		while (true)
@@ -390,6 +415,9 @@ struct AskMe {
 
 			if (choice == 5)
 				Ask_Q();
+			
+			if (choice == 6)
+				list_users();
 
 			if (choice == 8)
 				break;
@@ -560,6 +588,16 @@ struct AskMe {
 		q_db.Delete(q.id);
 
 		cout << "the above question was deleted successfully!!!!\n";
+		return 0;
+	}
+
+	int list_users() {
+		User_DB u_db;
+		vector<User> users = u_db.list();
+
+		for (auto user : users)
+			user.print();
+
 		return 0;
 	}
 };
