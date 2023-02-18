@@ -251,6 +251,7 @@ struct AskMe {
 	int menu()
 	{
 		cout << "Menu\n";
+		cout << "\t1: Print Questions To Me\n";
 		cout << "\t5: Ask Question\n";
 		cout << "\t8: Log Out\n\n";
 		int choice{0};
@@ -269,6 +270,9 @@ struct AskMe {
 	int run() {
 		while (true){
 			int choice = menu();
+
+			if (choice == 1)
+				print_q_to_me();
 
 			if (choice == 5)
 				Ask_Q();
