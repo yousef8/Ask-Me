@@ -27,3 +27,10 @@ This app was developed and tested on :
 - `gcc` as compiler
 
 - `gdb` as debugger
+
+## TO-DO
+
+- [ ] Refactor User and User DB structs
+- [ ] Refactor app structure
+- [ ] Make the app read last IDs from the DB file and not from separate file
+- [ ] Make one DB instance for the AskMe struct
