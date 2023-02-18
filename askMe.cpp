@@ -202,7 +202,7 @@ struct Q_DB {
 
 			fin.close();
 			//       qid            p_qid    is_anonymous      to          from       q    ans
-			Q temp(stoul(q[0]), stoul(q[1]), q[2] == "0", stoul(q[3]), stoul(q[4]), q[5], q[6]);
+			Q temp(stoul(q[0]), stoul(q[1]), q[2] == "1", stoul(q[3]), stoul(q[4]), q[5], q[6]);
 			return temp;
 		}
 
