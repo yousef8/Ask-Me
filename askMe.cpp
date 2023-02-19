@@ -396,6 +396,8 @@ struct Q_DB {
 
 struct AskMe {
 	User logged_user;
+	User_DB u_db;
+	Q_DB q_db;
 
 	AskMe() {
 	}
@@ -468,8 +470,7 @@ struct AskMe {
 		User to_user;
 
 		while (uid) {
-			User_DB db;
-			to_user = db.search(uid);
+			to_user = u_db.search(uid);
 			if (to_user.id)
 				break;
 				
@@ -501,8 +502,7 @@ struct AskMe {
 		cin >> p_qid;
 
 		while(p_qid) {
-			Q_DB db;
-			Q q = db.search(p_qid);
+			Q q = q_db.search(p_qid);
 			if (q.id)
 				break;
 			cout << "There is no such Question with the ID " << p_qid << "\n";
@@ -523,15 +523,12 @@ struct AskMe {
 		q.from = logged_user.id;
 		q.q = content;
 
-		Q_DB q_db;
 		q_db.create(q);
 
 		return 0;
 	}
 
 	int print_q_to_me() {
-		Q_DB q_db;
-
 		map<unsigned long, vector<Q>> mp;
 		mp = q_db.get_multi_Q("to", logged_user.id);
 
@@ -547,8 +544,6 @@ struct AskMe {
 	}
 
 	int print_q_from_me() {
-		Q_DB q_db;
-
 		map<unsigned long, vector<Q>> mp;
 		mp = q_db.get_multi_Q("from", logged_user.id);
 
@@ -565,7 +560,6 @@ struct AskMe {
 
 	int answer_q(){
 		unsigned long qid;
-		Q_DB q_db;
 		Q q;
 		while (true)
 		{
@@ -598,7 +592,6 @@ struct AskMe {
 
 	int delete_q(){
 		unsigned long qid;
-		Q_DB q_db;
 		Q q;
 		while (true)
 		{
@@ -637,7 +630,6 @@ struct AskMe {
 
 	int feed() {
 		map<unsigned long, vector<Q>> feed;
-		Q_DB q_db;
 		feed = q_db.feed(logged_user.id);
 		for (auto p : feed)
 			for (auto q : p.second)
