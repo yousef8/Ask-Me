@@ -5,6 +5,7 @@
  *      Author: eastking
  */
 #include "user.h"
+#include "user_db.h"
 #include <iostream>
 #include <atomic>
 #include <fstream>
@@ -16,111 +17,8 @@
 
 using namespace std;
 
-string users_file = "users.txt";
 string questions_file = "questions.txt";
 string q_last_id = "q_last_id.txt";
-
-struct User_DB
-{
-	User search(string username)
-	{
-		ifstream fin(users_file);
-
-		if (fin.fail())
-		{
-			cout << "Can't open the file\n";
-			User temp;
-			return temp;
-		}
-
-		string row;
-		while (getline(fin, row))
-		{
-			vector<string> usr;
-			istringstream iss(row);
-
-			string cell;
-			while (getline(iss, cell, ','))
-			{
-				usr.push_back(cell);
-			}
-
-			if (usr[3] == username)
-			{
-				fin.close();
-				User temp{stoul(usr[0]), usr[1], usr[2], usr[3], usr[4], usr[5] == "1"};
-				return temp;
-			};
-		}
-
-		fin.close();
-		User temp;
-		return temp;
-	}
-
-	User search(unsigned long uid)
-	{
-		ifstream fin(users_file);
-
-		if (fin.fail())
-		{
-			cout << "Can't open the file\n";
-			User temp;
-			return temp;
-		}
-
-		string row;
-		while (getline(fin, row))
-		{
-			vector<string> usr;
-			istringstream iss(row);
-
-			string cell;
-			while (getline(iss, cell, ','))
-			{
-				usr.push_back(cell);
-			}
-
-			if (stoul(usr[0]) == uid)
-			{
-				fin.close();
-				User temp{stoul(usr[0]), usr[1], usr[2], usr[3], usr[4], usr[5] == "1"};
-				return temp;
-			};
-		}
-
-		fin.close();
-		User temp;
-		return temp;
-	}
-
-	vector<User> list()
-	{
-		vector<User> users;
-		ifstream fin(users_file);
-		if (fin.fail())
-		{
-			cout << "Couldn't open users DB!!!\n";
-			return users;
-		}
-
-		string line;
-		while (getline(fin, line))
-		{
-			vector<string> user;
-			string col;
-			istringstream iss(line);
-			while (getline(iss, col, ','))
-				user.push_back(col);
-
-			User u(stoul(user[0]), user[1], user[2], user[3], user[4], user[5] == "1");
-			users.push_back(u);
-		}
-
-		fin.close();
-		return users;
-	}
-};
 
 struct Q
 {
@@ -760,7 +658,7 @@ struct Program
 		unsigned long id = generate_id();
 
 		// Adding user to file
-		ofstream fout("users.txt", ios::app);
+		ofstream fout("users_db.txt", ios::app);
 		fout << id << "," << name << "," << email << "," << username << ","
 			 << password << "," << an << "\n";
 		fout.close();

@@ -1,3 +1,6 @@
+#ifndef _user_H_
+#define _user_H_
+
 #include <string>
 
 class User
@@ -20,3 +23,4 @@ public:
     bool get_anonymous() const;
     std::string get_password() const;
 };
+#endif
