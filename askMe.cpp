@@ -6,6 +6,8 @@
  */
 #include "user.h"
 #include "user_db.h"
+#include "q.h"
+
 #include <iostream>
 #include <atomic>
 #include <fstream>
@@ -18,71 +20,6 @@
 using namespace std;
 
 string questions_file = "questions.txt";
-string q_last_id = "q_last_id.txt";
-
-struct Q
-{
-	unsigned long id, to, from, p_qid;
-	string q, ans;
-	bool is_anonymous;
-
-	Q()
-	{
-		id = to = from = p_qid = 0;
-		q = "";
-		ans = "NOT ANSWERED";
-		is_anonymous = 0;
-	}
-
-	Q(unsigned long _id, unsigned long _p_qid, bool _is_anonymous, unsigned long _to, unsigned long _from, string _q, string _ans)
-	{
-		id = _id;
-		p_qid = _p_qid;
-		to = _to;
-		from = _from;
-		is_anonymous = _is_anonymous;
-		q = _q;
-		ans = _ans;
-	}
-
-	unsigned long get_last_qid()
-	{
-		ifstream fin(q_last_id);
-		unsigned long l_qid;
-		if (!(fin >> l_qid))
-			l_qid = 0;
-		fin.close();
-		return l_qid;
-	}
-
-	int generate_id()
-	{
-		static atomic<unsigned long> n_qid = get_last_qid() + 1;
-
-		ofstream fout(q_last_id);
-		fout << n_qid;
-		fout.close();
-		id = n_qid++;
-		return 0;
-	}
-
-	int print()
-	{
-		if (p_qid)
-			cout << "\t|\n\t|_ _";
-		else
-			cout << "==>";
-		cout << "QID [" << id << "]";
-		if (p_qid)
-			cout << "  P_QID [" << p_qid << "]";
-		if (!is_anonymous)
-			cout << "  From [" << from << "]";
-		cout << "  To [" << to << "]"
-			 << "  Q: " << q << "\n";
-		cout << "\tAns: " << ans << "\n";
-		return 0;
-	}
-};
 
 struct Q_DB
 {
@@ -95,7 +32,7 @@ struct Q_DB
 			return 1;
 		}
 		q.generate_id();
-		fout << q.id << "," << q.p_qid << "," << q.is_anonymous << "," << q.to << "," << q.from << "," << q.q << "," << q.ans << "\n";
+		fout << q.get_id() << "," << q.get_p_qid() << "," << q.get_anonymity() << "," << q.get_to() << "," << q.get_from() << "," << q.get_q() << "," << q.get_ans() << "\n";
 		fout.close();
 		return 0;
 	}
@@ -160,10 +97,10 @@ struct Q_DB
 			if (stoul(cols[search_index]) == uid)
 			{
 				Q q(stoul(cols[0]), stoul(cols[1]), cols[2] == "1", stoul(cols[3]), stoul(cols[4]), cols[5], cols[6]);
-				if (q.p_qid)
-					mp[q.p_qid].push_back(q);
+				if (q.get_p_qid())
+					mp[q.get_p_qid()].push_back(q);
 				else
-					mp[q.id].push_back(q);
+					mp[q.get_id()].push_back(q);
 			}
 		}
 
@@ -298,10 +235,10 @@ struct Q_DB
 			if (cols[6] != "NOT ANSWERED" && (stoul(cols[3]) == uid || stoul(cols[4]) == uid))
 			{
 				Q q(stoul(cols[0]), stoul(cols[1]), cols[2] == "1", stoul(cols[3]), stoul(cols[4]), cols[5], cols[6]);
-				if (q.p_qid)
-					mp[q.p_qid].push_back(q);
+				if (q.get_p_qid())
+					mp[q.get_p_qid()].push_back(q);
 				else
-					mp[q.id].push_back(q);
+					mp[q.get_id()].push_back(q);
 			}
 		}
 
@@ -427,7 +364,7 @@ struct AskMe
 		while (p_qid)
 		{
 			Q q = q_db.search(p_qid);
-			if (q.id)
+			if (q.get_id())
 				break;
 			cout << "There is no such Question with the ID " << p_qid << "\n";
 			cout << "Enter a Question ID for thread questions or 0 for new questions : ";
@@ -441,11 +378,11 @@ struct AskMe
 		getline(cin, content);
 
 		Q q;
-		q.p_qid = p_qid;
-		q.is_anonymous = is_anonymous;
-		q.to = uid;
-		q.from = logged_user.get_id();
-		q.q = content;
+		q.set_parent_id(p_qid);
+		q.set_anonymity(is_anonymous);
+		q.set_to(uid);
+		q.set_from(logged_user.get_id());
+		q.set_q(content);
 
 		q_db.create(q);
 
@@ -495,26 +432,26 @@ struct AskMe
 			if (!qid)
 				return 0;
 			q = q_db.search(qid);
-			if (q.id == 0)
+			if (q.get_id() == 0)
 			{
 				cout << "No such question ID\n";
 				continue;
 			}
 
-			if (q.to == logged_user.get_id())
+			if (q.get_to() == logged_user.get_id())
 				break;
 			cout << "This question isn't for you to answer!!!\n";
 		}
 		q.print();
 
-		if (q.ans != "NOT ANSWERED")
+		if (q.get_ans() != "NOT ANSWERED")
 			cout << "Warning: Already answered. Answer will be updated!!!\n";
 		string ans;
 		cout << "Enter answer : ";
 		cin.clear();
 		cin.ignore(numeric_limits<streamsize>::max(), '\n');
 		getline(cin, ans);
-		q_db.update(q.id, ans);
+		q_db.update(q.get_id(), ans);
 		return 0;
 	}
 
@@ -529,20 +466,20 @@ struct AskMe
 			if (!qid)
 				return 0;
 			q = q_db.search(qid);
-			if (q.id == 0)
+			if (q.get_id() == 0)
 			{
 				cout << "No such question ID\n";
 				continue;
 			}
 
-			if (q.from == logged_user.get_id())
+			if (q.get_from() == logged_user.get_id())
 				break;
 			cout << "This question isn't from you to delete!!!\n";
 		}
 		q.print();
 		cout << "\n\n";
 
-		q_db.Delete(q.id);
+		q_db.Delete(q.get_id());
 
 		cout << "the above question was deleted successfully!!!!\n";
 		return 0;
