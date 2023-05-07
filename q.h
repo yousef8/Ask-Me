@@ -9,7 +9,6 @@ private:
     unsigned long id, to, from, p_qid;
     std::string q, ans;
     bool is_anonymous;
-    std::string q_last_id{"q_last_id.txt"};
 
 public:
     Q();
@@ -31,10 +30,6 @@ public:
     void set_to(unsigned long to_id);
     void set_from(unsigned long from_id);
     void set_q(std::string body);
-
-    unsigned long get_last_qid();
-
-    int generate_id();
 
     int print();
 };

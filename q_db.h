@@ -5,11 +5,16 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <fstream>
+#include <sstream>
 
 class Q_DB
 {
 private:
-    std::string questions_db = "questions.txt";
+    std::string db = "questions.txt";
+    std::istream &ignoreline(std::ifstream &in, std::ifstream::pos_type &pos);
+    std::string getLastLine(std::ifstream &in);
+    int getLastID();
 
 public:
     int create(Q q);

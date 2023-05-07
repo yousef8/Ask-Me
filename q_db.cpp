@@ -5,24 +5,63 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <limits>
+
+std::istream &Q_DB::ignoreline(std::ifstream &in, std::ifstream::pos_type &pos)
+{
+    pos = in.tellg();
+    return in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+std::string Q_DB::getLastLine(std::ifstream &in)
+{
+    std::ifstream::pos_type pos = in.tellg();
+
+    std::ifstream::pos_type lastPos;
+    while (in >> std::ws && ignoreline(in, lastPos))
+        pos = lastPos;
+
+    in.clear();
+    in.seekg(pos);
+
+    std::string line;
+    std::getline(in, line);
+    return line;
+}
+
+// The above code from c++ forum
+int Q_DB::getLastID()
+{
+    std::ifstream fin(db);
+    if (fin.peek() == std::ifstream::traits_type::eof())
+        return 0;
+
+    std::string line = getLastLine(fin);
+    fin.close();
+    std::istringstream iss(line);
+    std::string id;
+    getline(iss, id, ',');
+    return std::stoi(id);
+}
 
 int Q_DB::create(Q q)
 {
-    std::ofstream fout(questions_db, std::ios::app);
+
+    std::ofstream fout(db, std::ios::app);
     if (fout.fail())
     {
         std::cout << "Couldn't open questions DB\n";
         return 1;
     }
-    q.generate_id();
-    fout << q.get_id() << "," << q.get_p_qid() << "," << q.get_anonymity() << "," << q.get_to() << "," << q.get_from() << "," << q.get_q() << "," << q.get_ans() << "\n";
+    int qid = getLastID() + 1;
+    fout << qid << "," << q.get_p_qid() << "," << q.get_anonymity() << "," << q.get_to() << "," << q.get_from() << "," << q.get_q() << "," << q.get_ans() << "\n";
     fout.close();
     return 0;
 }
 
 Q Q_DB::search(unsigned long qid)
 {
-    std::ifstream fin(questions_db);
+    std::ifstream fin(db);
 
     std::string line;
     while (getline(fin, line))
@@ -65,7 +104,7 @@ std::map<unsigned long, std::vector<Q>> Q_DB::get_multi_Q(std::string search_fie
         return mp;
     }
 
-    std::ifstream fin(questions_db);
+    std::ifstream fin(db);
 
     std::string row;
     while (getline(fin, row))
@@ -102,7 +141,7 @@ int Q_DB::update(unsigned int qid, std::string ans)
         return 1;
     }
 
-    std::ifstream fin(questions_db);
+    std::ifstream fin(db);
     if (fin.fail())
     {
         std::cout << "couldn't open the questions DB\n";
@@ -127,14 +166,14 @@ int Q_DB::update(unsigned int qid, std::string ans)
 
     fin.close();
     fout.close();
-    int remove_status = remove(questions_db.c_str());
+    int remove_status = remove(db.c_str());
     if (remove_status)
     {
         std::cout << "Couldn't remove old questions DB\n";
         return 1;
     }
 
-    int rename_status = rename(new_file.c_str(), questions_db.c_str());
+    int rename_status = rename(new_file.c_str(), db.c_str());
     if (rename_status)
     {
         std::cout << "Couldn't rename the new questions DB\n";
@@ -154,7 +193,7 @@ int Q_DB::Delete(unsigned long qid)
         return 1;
     }
 
-    std::ifstream fin(questions_db);
+    std::ifstream fin(db);
     if (fin.fail())
     {
         std::cout << "couldn't open the questions DB\n";
@@ -179,14 +218,14 @@ int Q_DB::Delete(unsigned long qid)
 
     fin.close();
     fout.close();
-    int remove_status = remove(questions_db.c_str());
+    int remove_status = remove(db.c_str());
     if (remove_status)
     {
         std::cout << "Couldn't remove old questions DB\n";
         return 1;
     }
 
-    int rename_status = rename(new_file.c_str(), questions_db.c_str());
+    int rename_status = rename(new_file.c_str(), db.c_str());
     if (rename_status)
     {
         std::cout << "Couldn't rename the new questions DB\n";
@@ -198,7 +237,7 @@ int Q_DB::Delete(unsigned long qid)
 std::map<unsigned long, std::vector<Q>> Q_DB::feed(unsigned long uid)
 {
     std::map<unsigned long, std::vector<Q>> mp;
-    std::ifstream fin(questions_db);
+    std::ifstream fin(db);
     if (fin.fail())
     {
         std::cout << "Couldn't open the File DB!!!!\n";

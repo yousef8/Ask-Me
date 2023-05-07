@@ -10,27 +10,6 @@ Q::Q(unsigned long id, unsigned long p_qid, bool is_anonymous, unsigned long to,
 {
 }
 
-unsigned long Q::get_last_qid()
-{
-    std::ifstream fin(q_last_id);
-    unsigned long l_qid;
-    if (!(fin >> l_qid))
-        l_qid = 0;
-    fin.close();
-    return l_qid;
-}
-
-int Q::generate_id()
-{
-    static std::atomic<unsigned long> n_qid = get_last_qid() + 1;
-
-    std::ofstream fout(q_last_id);
-    fout << n_qid;
-    fout.close();
-    id = n_qid++;
-    return 0;
-}
-
 int Q::print()
 {
     if (p_qid)
