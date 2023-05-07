@@ -321,26 +321,6 @@ struct Program
 		return choice;
 	}
 
-	unsigned long get_last_uid()
-	{
-		ifstream fin("last_user_id.txt");
-		unsigned long l_uid;
-		if (!(fin >> l_uid))
-			l_uid = 0;
-		fin.close();
-		return l_uid;
-	}
-
-	unsigned long generate_id()
-	{
-		static atomic<unsigned long> id = get_last_uid() + 1;
-
-		ofstream fout("last_user_id.txt");
-		fout << id;
-		fout.close();
-		return id++;
-	}
-
 	unsigned long sign_up()
 	{
 		cout << "Enter Name (no spaces) : ";
@@ -363,15 +343,9 @@ struct Program
 		bool an;
 		cin >> an;
 
-		// Generate ID
-
-		unsigned long id = generate_id();
-
 		// Adding user to file
-		ofstream fout("users_db.txt", ios::app);
-		fout << id << "," << name << "," << email << "," << username << ","
-			 << password << "," << an << "\n";
-		fout.close();
+		User_DB udb;
+		udb.create(name, email, username, password, an);
 
 		return 0;
 	}
