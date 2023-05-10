@@ -20,19 +20,16 @@
 
 using namespace std;
 
-struct AskMe
+class questionController
 {
+private:
 	User logged_user;
 	User_DB u_db;
 	Q_DB q_db;
 
-	AskMe()
+public:
+	questionController(User user) : logged_user{user}
 	{
-	}
-
-	AskMe(User _user)
-	{
-		logged_user = _user;
 	}
 
 	int menu()
@@ -59,7 +56,7 @@ struct AskMe
 		return choice;
 	}
 
-	int run()
+	int begin()
 	{
 		while (true)
 		{
@@ -281,28 +278,12 @@ struct AskMe
 	}
 };
 
-struct Program
+class userController
 {
-	void run()
-	{
-		while (true)
-		{
-			int choice = start_menu();
+private:
+	User_DB db;
 
-			if (choice == 1)
-				sign_up();
-
-			if (choice == 2)
-				login();
-
-			if (choice == 3)
-				break;
-		}
-		cout << "GoodBye!!!\n";
-		return;
-	}
-
-	int start_menu()
+	int menu()
 	{
 		cout << "\nMenu:\n";
 		cout << "\t1: Sign Up\n";
@@ -344,15 +325,13 @@ struct Program
 		cin >> an;
 
 		// Adding user to file
-		User_DB udb;
-		udb.create(name, email, username, password, an);
+		db.create(name, email, username, password, an);
 
 		return 0;
 	}
 
 	void login()
 	{
-		User_DB user_db;
 		string username, password;
 		User usr;
 
@@ -364,7 +343,7 @@ struct Program
 			cout << "Enter password : ";
 			cin >> password;
 
-			usr = user_db.search(username);
+			usr = db.search(username);
 			if (!usr.get_id())
 			{
 				cout << "User doesn't exist. You got " << 2 - i << " tries left"
@@ -384,16 +363,36 @@ struct Program
 		if (!usr.get_id())
 			return;
 
-		AskMe ask(usr);
-		ask.run();
+		questionController controller(usr);
+		controller.begin();
+		return;
+	}
+
+public:
+	void begin()
+	{
+		while (true)
+		{
+			int choice = menu();
+
+			if (choice == 1)
+				sign_up();
+
+			if (choice == 2)
+				login();
+
+			if (choice == 3)
+				break;
+		}
+		cout << "GoodBye!!!\n";
 		return;
 	}
 };
 
 int main()
 {
-	Program program;
-	program.run();
+	userController program;
+	program.begin();
 
 	return 0;
 }
