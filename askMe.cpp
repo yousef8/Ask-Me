@@ -257,7 +257,6 @@ public:
 
 	int list_users()
 	{
-		User_DB u_db;
 		vector<User> users = u_db.list();
 
 		for (auto user : users)
